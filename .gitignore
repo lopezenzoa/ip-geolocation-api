@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+target/
+bin/
+out/
+
+# IDE
+.idea
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+# IDE configuration files
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+.apt_generated
+
+# Project docs
+HELP.md
