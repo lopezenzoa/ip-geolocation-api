@@ -6,7 +6,7 @@
 # Build output
 target/
 bin/
-out/
+/out/
 
 # IDE
 .idea
