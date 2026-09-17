@@ -65,6 +65,26 @@ com/portfolio/ip_geolocation_api
 | `PUT /api/ip/{ip}` | 200 + `IpAddr` | 400, 404 |
 | `DELETE /api/ip/{ip}` | 204 | 400, 404 |
 
+## Exceptions
+
+All errors are returned as a structured `ApiError` body. The exception-to-response mapping is shown below.
+
+| Exception | HTTP Status | Thrown When |
+|---|---|---|
+| `IpAddrNotFoundException` | 404 | The IP address is not stored and the external lookup found no match |
+| `IpAddrAlreadyExistsException` | 409 | `POST /api/ip` with an IP already stored |
+| `InvalidIpAddrDataException` | 400 | Blank/required IP input, invalid domain data |
+| `GeolocationServiceUnavailableException` | 503 | Upstream geolocation API is down, timing out, or returned a 5xx |
+| `GeolocationRateLimitedException` | 429 | Upstream geolocation API rate limit exceeded |
+| `GeolocationAuthenticationException` | 500 | Upstream geolocation API rejected the API key (401/403) |
+| `IpCachePersistenceException` | 500 | Local JSON cache file could not be read or written |
+| `MethodArgumentNotValidException` / `ConstraintViolationException` | 400 | Bean validation failed on the request body |
+| `HttpMessageNotReadableException` | 400 | Malformed or missing JSON request body |
+| `MethodArgumentTypeMismatchException` | 400 | Path variable of the wrong type |
+| `NoResourceFoundException` | 404 | Unknown path |
+| `HttpRequestMethodNotSupportedException` | 405 | HTTP method not allowed for the path |
+| Any unhandled `Exception` | 500 | Catch-all for unexpected failures |
+
 ## External API Response Structure
 
 The following is the structure returned by the geolocation API (ipgeolocation.io):

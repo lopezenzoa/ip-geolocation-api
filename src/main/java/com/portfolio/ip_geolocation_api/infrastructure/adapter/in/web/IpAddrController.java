@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -57,11 +59,13 @@ public class IpAddrController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "IpAddr created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid or blank IP address"),
-            @ApiResponse(responseCode = "404", description = "Geolocation lookup failed for the IP"),
-            @ApiResponse(responseCode = "409", description = "IP address already exists")
+            @ApiResponse(responseCode = "404", description = "Geolocation lookup found no match for the IP"),
+            @ApiResponse(responseCode = "409", description = "IP address already exists"),
+            @ApiResponse(responseCode = "429", description = "Geolocation service rate limit exceeded"),
+            @ApiResponse(responseCode = "503", description = "Geolocation service unavailable")
     })
     @PostMapping
-    public ResponseEntity<IpAddr> create(@RequestBody CreateIpAddrRequest request) {
+    public ResponseEntity<IpAddr> create(@Valid @RequestBody CreateIpAddrRequest request) {
         IpAddr created = createIpAddrCommand.execute(request.getIp());
         return ResponseEntity.created(URI.create("/api/ip/" + created.getIp()))
                 .body(created);
@@ -80,7 +84,10 @@ public class IpAddrController {
             description = "Returns the record from the local store, or fetches it from the external API if not stored.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "IpAddr found"),
-            @ApiResponse(responseCode = "404", description = "IP address not found")
+            @ApiResponse(responseCode = "400", description = "Invalid or blank IP address"),
+            @ApiResponse(responseCode = "404", description = "IP address not found"),
+            @ApiResponse(responseCode = "429", description = "Geolocation service rate limit exceeded"),
+            @ApiResponse(responseCode = "503", description = "Geolocation service unavailable")
     })
     @GetMapping("/{ip}")
     public ResponseEntity<IpAddr> getIp(

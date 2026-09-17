@@ -39,7 +39,7 @@ public class IpAddrService {
 
     public Optional<IpAddr> readByIp(String ip) {
         if (ip == null || ip.isBlank()) {
-            return Optional.empty();
+            throw new InvalidIpAddrDataException("IP address is required");
         }
         Optional<IpAddr> cached = persistencePort.findByIp(ip);
         if (cached.isPresent()) {

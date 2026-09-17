@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -66,8 +67,12 @@ public class IpAddrPersistenceAdapter implements IpAddrPersistencePort {
         if (!Files.exists(cacheFile)) {
             return new ArrayList<>();
         }
-        return new ArrayList<>(objectMapper.readValue(cacheFile.toFile(),
-                new TypeReference<List<IpAddr>>() { }));
+        try {
+            return new ArrayList<>(objectMapper.readValue(cacheFile.toFile(),
+                    new TypeReference<List<IpAddr>>() { }));
+        } catch (JacksonException e) {
+            throw new IpCachePersistenceException("Failed to parse IP cache file: " + cacheFile, e);
+        }
     }
 
     private void writeAll(List<IpAddr> ipAddrs) {
@@ -77,7 +82,7 @@ public class IpAddrPersistenceAdapter implements IpAddrPersistencePort {
             }
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(cacheFile.toFile(), ipAddrs);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write IP cache file: " + cacheFile, e);
+            throw new IpCachePersistenceException("Failed to write IP cache file: " + cacheFile, e);
         }
     }
 }
