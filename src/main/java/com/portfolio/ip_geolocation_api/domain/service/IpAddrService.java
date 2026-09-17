@@ -1,12 +1,12 @@
 package com.portfolio.ip_geolocation_api.domain.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.portfolio.ip_geolocation_api.application.port.out.GetIpLocationPort;
+import com.portfolio.ip_geolocation_api.application.port.out.IpAddrPersistencePort;
 import com.portfolio.ip_geolocation_api.domain.exception.IpAddrAlreadyExistsException;
 import com.portfolio.ip_geolocation_api.domain.exception.IpAddrNotFoundException;
 import com.portfolio.ip_geolocation_api.domain.exception.InvalidIpAddrDataException;
@@ -15,10 +15,11 @@ import com.portfolio.ip_geolocation_api.domain.model.IpAddr;
 @Service
 public class IpAddrService {
 
-    private final List<IpAddr> ipAddrStore = new ArrayList<>();
+    private final IpAddrPersistencePort persistencePort;
     private final GetIpLocationPort getIpLocationPort;
 
-    public IpAddrService(GetIpLocationPort getIpLocationPort) {
+    public IpAddrService(IpAddrPersistencePort persistencePort, GetIpLocationPort getIpLocationPort) {
+        this.persistencePort = persistencePort;
         this.getIpLocationPort = getIpLocationPort;
     }
 
@@ -29,12 +30,10 @@ public class IpAddrService {
         if (ipAddr.getIp() == null || ipAddr.getIp().isBlank()) {
             throw new InvalidIpAddrDataException("IP address is required");
         }
-        boolean alreadyExists = ipAddrStore.stream()
-                .anyMatch(existing -> existing.getIp().equals(ipAddr.getIp()));
-        if (alreadyExists) {
+        if (persistencePort.findByIp(ipAddr.getIp()).isPresent()) {
             throw new IpAddrAlreadyExistsException(ipAddr.getIp());
         }
-        ipAddrStore.add(ipAddr);
+        persistencePort.save(ipAddr);
         return ipAddr;
     }
 
@@ -42,18 +41,19 @@ public class IpAddrService {
         if (ip == null || ip.isBlank()) {
             return Optional.empty();
         }
-        return findInStore(ip)
-                .or(() -> getIpLocationPort.getIpLocation(ip));
-    }
-
-    private Optional<IpAddr> findInStore(String ip) {
-        return ipAddrStore.stream()
-                .filter(ipAddr -> ipAddr.getIp().equals(ip))
-                .findFirst();
+        Optional<IpAddr> cached = persistencePort.findByIp(ip);
+        if (cached.isPresent()) {
+            return cached;
+        }
+        return getIpLocationPort.getIpLocation(ip)
+                .map(fetched -> {
+                    persistencePort.save(fetched);
+                    return fetched;
+                });
     }
 
     public List<IpAddr> listAll() {
-        return List.copyOf(ipAddrStore);
+        return persistencePort.findAll();
     }
 
     public IpAddr update(String ip, IpAddr updatedIpAddr) {
@@ -63,23 +63,21 @@ public class IpAddrService {
         if (updatedIpAddr == null) {
             throw new InvalidIpAddrDataException("Updated IpAddr cannot be null");
         }
-        for (int i = 0; i < ipAddrStore.size(); i++) {
-            if (ipAddrStore.get(i).getIp().equals(ip)) {
-                updatedIpAddr.setIp(ip);
-                ipAddrStore.set(i, updatedIpAddr);
-                return updatedIpAddr;
-            }
+        if (persistencePort.findByIp(ip).isEmpty()) {
+            throw new IpAddrNotFoundException(ip);
         }
-        throw new IpAddrNotFoundException(ip);
+        updatedIpAddr.setIp(ip);
+        persistencePort.save(updatedIpAddr);
+        return updatedIpAddr;
     }
 
     public void delete(String ip) {
         if (ip == null || ip.isBlank()) {
             throw new InvalidIpAddrDataException("IP address is required");
         }
-        boolean removed = ipAddrStore.removeIf(ipAddr -> ipAddr.getIp().equals(ip));
-        if (!removed) {
+        if (persistencePort.findByIp(ip).isEmpty()) {
             throw new IpAddrNotFoundException(ip);
         }
+        persistencePort.delete(ip);
     }
 }

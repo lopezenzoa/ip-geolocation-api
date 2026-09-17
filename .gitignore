@@ -26,3 +26,6 @@ bin/
 
 # Project docs
 HELP.md
+
+# Runtime cache
+data/
