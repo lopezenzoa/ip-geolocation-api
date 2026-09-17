@@ -55,6 +55,16 @@ com/portfolio/ip_geolocation_api
 }
 ```
 
+## Endpoints
+
+| Method/Path | Success | Errors |
+|---|---|---|
+| `POST /api/ip` | 201 + `IpAddr` | 400 blank/duplicate, 404 lookup failed, 409 exists |
+| `GET /api/ip` | 200 + `List<IpAddr>` | — |
+| `GET /api/ip/{ip}` | 200 + `IpAddr` | 404 |
+| `PUT /api/ip/{ip}` | 200 + `IpAddr` | 400, 404 |
+| `DELETE /api/ip/{ip}` | 204 | 400, 404 |
+
 ## External API Response Structure
 
 The following is the structure returned by the geolocation API (ipgeolocation.io):
