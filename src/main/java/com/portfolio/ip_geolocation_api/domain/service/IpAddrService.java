@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.portfolio.ip_geolocation_api.application.port.out.GetIpLocationPort;
 import com.portfolio.ip_geolocation_api.domain.exception.IpAddrAlreadyExistsException;
 import com.portfolio.ip_geolocation_api.domain.exception.IpAddrNotFoundException;
 import com.portfolio.ip_geolocation_api.domain.exception.InvalidIpAddrDataException;
@@ -15,6 +16,11 @@ import com.portfolio.ip_geolocation_api.domain.model.IpAddr;
 public class IpAddrService {
 
     private final List<IpAddr> ipAddrStore = new ArrayList<>();
+    private final GetIpLocationPort getIpLocationPort;
+
+    public IpAddrService(GetIpLocationPort getIpLocationPort) {
+        this.getIpLocationPort = getIpLocationPort;
+    }
 
     public IpAddr create(IpAddr ipAddr) {
         if (ipAddr == null) {
@@ -36,6 +42,11 @@ public class IpAddrService {
         if (ip == null || ip.isBlank()) {
             return Optional.empty();
         }
+        return findInStore(ip)
+                .or(() -> getIpLocationPort.getIpLocation(ip));
+    }
+
+    private Optional<IpAddr> findInStore(String ip) {
         return ipAddrStore.stream()
                 .filter(ipAddr -> ipAddr.getIp().equals(ip))
                 .findFirst();
