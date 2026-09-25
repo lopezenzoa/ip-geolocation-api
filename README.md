@@ -65,6 +65,7 @@ Target layout:
 | Variable | Required | Example | Purpose |
 | --- | --- | --- | --- |
 | `IPGEOLOCATION_API_KEY` | yes | `your-api-key` | Authenticates calls to ipgeolocation.io |
+| `IPGEOLOCATION_BASE_URL` | yes | `https://api.ipgeolocation.io/v3/ipgeo` | ipgeolocation.io IP geolocation API base URL |
 | `PORT` | no | `3000` | HTTP listen port |
 
 Do not commit secrets. Keep keys in `.env` (ignored by git).
